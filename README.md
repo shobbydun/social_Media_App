@@ -6,8 +6,9 @@ Users can also view profiles, view all users, and share content via multiple pla
 
 # Features
 - User Authentication: Sign up, log in, and manage user sessions with Firebase Authentication.
-- Post Messages: Users can create and post messages.
+- Post Messages: Users can create, post and delete post messages.
 - Search Functionality: Users can search for other users and posts.
+- Stories section: Where users can clickon other uses and view their proifles.
 - View All Users: Users can view a list of all registered users.
 - View Profile: Users can view their own profile and the profiles of other users.
 - Sharing Posts: Users can share posts through various platforms such as WhatsApp, email, and more.
