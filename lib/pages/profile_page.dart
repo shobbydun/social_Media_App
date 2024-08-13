@@ -5,35 +5,37 @@ import 'package:intl/intl.dart';
 import 'package:social_media_app/components/my_back_button.dart';
 
 class ProfilePage extends StatelessWidget {
-  ProfilePage({super.key});
+  final String email;
+
+  ProfilePage({super.key, required this.email});
 
   // Current logged in user
   User? get currentUser => FirebaseAuth.instance.currentUser;
 
-  // Future to fetch user details
   Future<DocumentSnapshot<Map<String, dynamic>>> getUserDetails() async {
-    if (currentUser == null) {
-      throw Exception('User not logged in');
+    if (email.isEmpty) {
+      throw Exception('Email cannot be empty');
     }
+
     return await FirebaseFirestore.instance
         .collection("users")
-        .doc(currentUser!.email)
+        .doc(email)
         .get();
   }
 
-  // Stream to fetch user posts
   Stream<QuerySnapshot<Map<String, dynamic>>> getUserPosts() {
     if (currentUser == null) {
       throw Exception('User not logged in');
     }
-    
-    // Print current user email for debugging
-    print("Fetching posts for user email: ${currentUser!.email}");
 
+    if (email.isEmpty) {
+      throw Exception('Email cannot be empty');
+    }
+    
     return FirebaseFirestore.instance
-        .collection("posts")
-        .where('UserEmail', isEqualTo: currentUser!.email)
-        .orderBy('TimeStamp', descending: true) // Ensure this matches the index
+        .collection("Posts")
+        .where('UserEmail', isEqualTo: email)
+        .orderBy('TimeStamp', descending: true)
         .snapshots();
   }
 
@@ -44,26 +46,17 @@ class ProfilePage extends StatelessWidget {
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         future: getUserDetails(),
         builder: (context, snapshot) {
-          // Loading
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
             );
-          }
-
-          // Error
-          else if (snapshot.hasError) {
+          } else if (snapshot.hasError) {
             return Center(
               child: Text("Error: ${snapshot.error}"),
             );
-          }
-
-          // Data received
-          else if (snapshot.hasData && snapshot.data!.exists) {
-            // Extract the data
+          } else if (snapshot.hasData && snapshot.data!.exists) {
             Map<String, dynamic>? user = snapshot.data!.data();
 
-            // Check if user data is null
             if (user == null) {
               return const Center(
                 child: Text("User data is empty"),
@@ -74,7 +67,6 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Back button
                   const Padding(
                     padding: EdgeInsets.only(left: 25.0, top: 50),
                     child: Row(
@@ -83,10 +75,7 @@ class ProfilePage extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 25),
-
-                  // Profile picture
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: Theme.of(context).colorScheme.primary,
@@ -96,10 +85,7 @@ class ProfilePage extends StatelessWidget {
                       color: Theme.of(context).colorScheme.onPrimary,
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Username
                   Text(
                     user['username'] ?? 'No Username',
                     style: const TextStyle(
@@ -107,20 +93,14 @@ class ProfilePage extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
-                  // Email
                   Text(
                     user['email'] ?? 'No Email',
                     style: TextStyle(
                       color: Colors.grey[600],
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Bio
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Text(
@@ -132,10 +112,7 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Followers and Following
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Row(
@@ -143,23 +120,28 @@ class ProfilePage extends StatelessWidget {
                       children: [
                         _buildStatColumn(
                           'Followers',
-                          (user['followersCount'] ?? 243000) as int,
+                          (user['followersCount'] ?? 124570000) as int,
                         ),
                         _buildStatColumn(
                           'Following',
-                          (user['followingCount'] ?? 1040) as int,
+                          (user['followingCount'] ?? 189200) as int,
                         ),
-                        _buildStatColumn(
-                          'Posts',
-                          (user['postsCount'] ?? 0) as int,
+                        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: getUserPosts(),
+                          builder: (context, postSnapshot) {
+                            int postCount = postSnapshot.hasData
+                                ? postSnapshot.data!.docs.length
+                                : 0;
+                            return _buildStatColumn(
+                              'Posts',
+                              postCount,
+                            );
+                          },
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Edit Profile Button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: ElevatedButton(
@@ -169,20 +151,17 @@ class ProfilePage extends StatelessWidget {
                       child: const Text('Edit Profile'),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Recent Activity or Posts
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Recent Posts',
+                          'Recent Posts:',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 1),
                         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                           stream: getUserPosts(),
                           builder: (context, snapshot) {
@@ -195,9 +174,6 @@ class ProfilePage extends StatelessWidget {
                             }
 
                             final posts = snapshot.data?.docs;
-
-                            // Print the retrieved posts for debugging
-                            print("Retrieved posts: ${posts?.map((e) => e.data()).toList()}");
 
                             if (posts == null || posts.isEmpty) {
                               return const Center(
@@ -214,13 +190,46 @@ class ProfilePage extends StatelessWidget {
                               itemCount: posts.length,
                               itemBuilder: (context, index) {
                                 final post = posts[index];
-                                String message = post['PostMessage'];
-                                Timestamp timestamp = post['TimeStamp'];
+                                final data = post.data(); // Access document data as a Map
+                                String message = data['PostMessage'] ?? '';
+                                Timestamp timestamp = data['TimeStamp'];
+
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 5.0),
-                                  child: ListTile(
-                                    title: Text(message),
-                                    subtitle: Text(DateFormat('MMM d, yyyy - h:mm a').format(timestamp.toDate())),
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Card(
+                                    elevation: 5,
+                                    shadowColor: Colors.orangeAccent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.all(16.0),
+                                      title: Text(
+                                        message,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        DateFormat('MMM d, yyyy - h:mm a').format(timestamp.toDate()),
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      trailing: IconButton(
+                                        icon: const Icon(Icons.delete),
+                                        onPressed: () async {
+                                          bool confirm = await _confirmDelete(context);
+                                          if (confirm) {
+                                            await FirebaseFirestore.instance
+                                                .collection("Posts")
+                                                .doc(post.id) // Access document ID
+                                                .delete();
+                                          }
+                                        },
+                                      ),
+                                    ),
                                   ),
                                 );
                               },
@@ -271,5 +280,25 @@ class ProfilePage extends StatelessWidget {
     } else {
       return number.toString(); // For numbers less than 1000
     }
+  }
+
+  Future<bool> _confirmDelete(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Post"),
+        content: const Text("Are you sure you want to delete this post?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 }

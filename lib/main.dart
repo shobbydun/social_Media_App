@@ -28,8 +28,11 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login_register_page': (context) => const LoginOrRegisterPage(),
         '/home_page': (context) =>  HomePage(),
-        '/profile_page': (context) => ProfilePage(),
-        '/users_page': (c0ntext) => const UsersPage()
+        '/profile_page': (context) {
+          final email = ModalRoute.of(context)?.settings.arguments as String?;
+          return ProfilePage(email: email ?? '');
+        },
+        '/users_page': (context) => const UsersPage(),
       },
     );
   }

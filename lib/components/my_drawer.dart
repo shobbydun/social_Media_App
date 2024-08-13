@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
 
-
-   //void logout user
-  void logout(){
+  // Logout user
+  void logout() {
     FirebaseAuth.instance.signOut();
-    
   }
 
   @override
@@ -20,7 +18,7 @@ class MyDrawer extends StatelessWidget {
         children: [
           Column(
             children: [
-              //drawer  header
+              // Drawer header
               DrawerHeader(
                 child: Icon(
                   Icons.connect_without_contact,
@@ -28,12 +26,9 @@ class MyDrawer extends StatelessWidget {
                   size: 80,
                 ),
               ),
+              const SizedBox(height: 25),
 
-              const SizedBox(
-                height: 25,
-              ),
-
-              //home tile
+              // Home tile
               Padding(
                 padding: const EdgeInsets.only(left: 25.0),
                 child: ListTile(
@@ -43,40 +38,49 @@ class MyDrawer extends StatelessWidget {
                   ),
                   title: Text("H O M E"),
                   onTap: () {
-                    //pop drawer
+                    // Pop drawer
                     Navigator.pop(context);
+                    // Navigate to home page
+                    Navigator.pushNamed(context, '/home_page');
                   },
                 ),
               ),
+              const SizedBox(height: 10),
 
-              const SizedBox(
-                height: 10,
-              ),
-
-              //profile tile
+              // Profile tile
               Padding(
                 padding: const EdgeInsets.only(left: 25.0),
                 child: ListTile(
                   leading: Icon(
-                    Icons.home,
+                    Icons.person,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                   title: const Text("P R O F I L E"),
-                  onTap: () {
-                    //pop drawer
+                  onTap: () async {
+                    // Pop drawer
                     Navigator.pop(context);
 
-                    //navigate to profile page
-                    Navigator.pushNamed(context, '/profile_page');
+                    // Fetch current user email
+                    final User? currentUser = FirebaseAuth.instance.currentUser;
+                    if (currentUser != null && currentUser.email != null) {
+                      // Navigate to profile page
+                      Navigator.pushNamed(
+                        context,
+                        '/profile_page',
+                        arguments: currentUser.email!,
+                      );
+                    } else {
+                      // Handle case where user is not logged in or email is null
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('No user is currently logged in')),
+                      );
+                    }
                   },
                 ),
               ),
+              const SizedBox(height: 10),
 
-              const SizedBox(
-                height: 10,
-              ),
-
-              //users tile
+              // Users tile
               Padding(
                 padding: const EdgeInsets.only(left: 25.0),
                 child: ListTile(
@@ -86,11 +90,9 @@ class MyDrawer extends StatelessWidget {
                   ),
                   title: const Text("U S E R S"),
                   onTap: () {
-                    //pop drawer
+                    // Pop drawer
                     Navigator.pop(context);
-
-
-                    //navigate to users_page
+                    // Navigate to users page
                     Navigator.pushNamed(context, '/users_page');
                   },
                 ),
@@ -98,7 +100,7 @@ class MyDrawer extends StatelessWidget {
             ],
           ),
 
-          //log out
+          // Log out
           Padding(
             padding: const EdgeInsets.only(left: 20, bottom: 20.0),
             child: ListTile(
@@ -108,10 +110,9 @@ class MyDrawer extends StatelessWidget {
               ),
               title: const Text("L O G_O U T"),
               onTap: () {
-                //pop drawer
+                // Pop drawer
                 Navigator.pop(context);
-
-                //logout
+                // Logout
                 logout();
               },
             ),
